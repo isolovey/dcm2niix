@@ -9,10 +9,6 @@
 #include "RNifti.h"
 #endif
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h> //requires VS 2015 or later
 
 #include <string.h>
@@ -77,9 +73,5 @@ void nifti_mat44_to_quatern( mat44 R ,
 mat44 nifti_quatern_to_mat44( float qb, float qc, float qd,
                              float qx, float qy, float qz,
                              float dx, float dy, float dz, float qfac );
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif

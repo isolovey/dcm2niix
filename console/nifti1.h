@@ -133,12 +133,6 @@
      sizeof(int) = sizeof(float) = 4 ;  sizeof(short) = 2
 -----------------------------------------------------------------------------*/
 
-/*=================*/
-#ifdef  __cplusplus
-extern "C" {
-#endif
-/*=================*/
-
 /*! \struct nifti_1_header
     \brief Data structure defining the fields in the nifti1 header.
            This binary header should be found at the beginning of a valid
@@ -1491,11 +1485,5 @@ typedef struct { unsigned char r,g,b; } rgb_byte ;
 #define NIFTI_5TH_DIM(h) ( ((h).dim[0]>4 && (h).dim[5]>1) ? (h).dim[5] : 0 )
 
 /*****************************************************************************/
-
-/*=================*/
-#ifdef  __cplusplus
-}
-#endif
-/*=================*/
 
 #endif /* _NIFTI_HEADER_ */

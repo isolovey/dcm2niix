@@ -4,9 +4,6 @@
 #ifndef MRIpro_nii_batch_h
 #define MRIpro_nii_batch_h
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h> //requires VS 2015 or later
 #include <string.h>
@@ -57,8 +54,6 @@ extern "C" {
     int nii_createFilename(struct TDICOMdata dcm, char * niiFilename, struct TDCMopts opts);
     void  nii_createDummyFilename(char * niiFilename, struct TDCMopts opts);
     //void findExe(char name[512], const char * argv[]);
-#ifdef  __cplusplus
-}
-#endif
+
 
 #endif
