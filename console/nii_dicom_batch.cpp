@@ -2260,6 +2260,9 @@ int nii_createFilename(struct TDICOMdata dcm, char * niiFilename, struct TDCMopt
 				else
 					strcat (outname,"NA");
 			}
+            if (f == 'W')
+                if(dcm.frameLabels.size() > 0 && dcm.frameLabelIndex > 0)
+                    strcat(outname,dcm.frameLabels[dcm.frameLabelIndex-1].c_str());
 			if (f == 'X')
 				strcat (outname,dcm.studyID);
             if (f == 'Z')
@@ -4811,6 +4814,7 @@ int saveDcm2Nii(int nConvert, struct TDCMsort dcmSort[],struct TDICOMdata dcmLis
 			}
 		}
 		if (s > 1) dcmList[indx].CSA.numDti = 0; //only save bvec for first type (magnitude)
+		dcmList->frameLabelIndex = s;
 		int ret2 = saveDcm2NiiCore(nConvert, dcmSort, dcmList, nameList, opts, &dti4Ds, s);
         if (ret2 != EXIT_SUCCESS) ret = ret2; //return EXIT_SUCCESS only if ALL are successful
 	}

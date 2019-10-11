@@ -51,6 +51,7 @@ Options
                 - %t, time
                 - %u, acquisition number
                 - %v, vendor
+                - %w, frame label
                 - %x, study ID
                 - %z, sequence name
 

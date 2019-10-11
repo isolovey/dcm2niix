@@ -660,6 +660,10 @@ int headerDcm2Nii2(struct TDICOMdata d, struct TDICOMdata d2, struct nifti_1_hea
         sprintf(dtxt, ";mb=%d", d.CSA.multiBandFactor);
         strcat(txt,dtxt);
     }
+    if (d.frameLabels.size() > 0 && d.frameLabelIndex > 0) {
+        const char *label = d.frameLabels[d.frameLabelIndex - 1].c_str();
+        sprintf(txt, "%s;%s", txt, label);
+    }
     // GCC 8 warns about truncation using snprintf
     // snprintf(h->descrip,80, "%s",txt);
     memcpy(h->descrip, txt, 79);
@@ -694,6 +698,7 @@ struct TDICOMdata clear_dicom_data() {
     }
     for (int i=0; i < MAX_NUMBER_OF_DIMENSIONS; ++i)
       d.dimensionIndexValues[i] = 0;
+    d.frameLabels.clear();
     //d.CSA.sliceTiming[0] = -1.0f; //impossible value denotes not known
     for (int z = 0; z < kMaxEPI3D; z++)
     	d.CSA.sliceTiming[z] = -1.0;
@@ -789,6 +794,7 @@ struct TDICOMdata clear_dicom_data() {
     d.acquNum = 0;
     d.imageNum = 1;
     d.imageStart = 0;
+    d.isDiffusion = false;
     d.is3DAcq = false; //e.g. MP-RAGE, SPACE, TFE
     d.is2DAcq = false; //
     d.isDerived = false; //0008,0008 = DERIVED,CSAPARALLEL,POSDISP
@@ -4114,6 +4120,7 @@ const uint32_t kEffectiveTE  = 0x0018+ (0x9082 << 16);
 #define  kDimensionIndexValues 0x0020+uint32_t(0x9157<< 16 ) // UL n-dimensional index of frame.
 #define  kInStackPositionNumber 0x0020+uint32_t(0x9057<< 16 ) // UL can help determine slices in volume
 #define  kDimensionIndexPointer 0x0020+uint32_t(0x9165<< 16 )
+#define  kFrameLabel 0x0020+uint32_t(0x9453<< 16 ) // LO
 //Private Group 21 as Used by Siemens:
 #define  kSequenceVariant21 0x0021+(0x105B<< 16 )//CS
 #define  kPATModeText 0x0021+(0x1009<< 16 )//LO, see kImaPATModeText
@@ -4148,6 +4155,7 @@ const uint32_t kEffectiveTE  = 0x0018+ (0x9082 << 16);
 #define  kStudyComments 0x0032+(0x4000<< 16 )//LT StudyComments
 //#define  kObjectGraphics  0x0029+(0x1210 << 16 )    //0029,1210 syngoPlatformOOGInfo Object Oriented Graphics
 #define  kProcedureStepDescription 0x0040+(0x0254 << 16 )
+#define  kMeasurementUnitsCodeSequence 0x0040+(0x08EA << 16) //SQ
 #define  kRealWorldIntercept  0x0040+uint32_t(0x9224 << 16 ) //IS dicm2nii's SlopInt_6_9
 #define  kRealWorldSlope  0x0040+uint32_t(0x9225 << 16 ) //IS dicm2nii's SlopInt_6_9
 #define  kUserDefineDataGE  0x0043+(0x102A << 16 ) //OB
@@ -4217,6 +4225,7 @@ double TE = 0.0; //most recent echo time recorded
     int inStackPositionNumber = 0;
     uint32_t dimensionIndexPointer[MAX_NUMBER_OF_DIMENSIONS];
     size_t dimensionIndexPointerCounter = 0;
+    uint32_t parameterDimension, parameterIndex;
     int maxInStackPositionNumber = 0;
     //int temporalPositionIdentifier = 0;
     int locationsInAcquisitionPhilips = 0;
@@ -5083,6 +5092,17 @@ double TE = 0.0; //most recent echo time recorded
 				break;
             case kDimensionIndexPointer:
                 dimensionIndexPointer[dimensionIndexPointerCounter++] = dcmAttributeTag(&buffer[lPos],d.isLittleEndian);
+                break;
+            case kFrameLabel:
+                for(size_t i = 0; i < dimensionIndexPointerCounter; i++)
+                    if (dimensionIndexPointer[i] == kMeasurementUnitsCodeSequence)
+                        parameterDimension = i;
+                parameterIndex = d.dimensionIndexValues[parameterDimension];
+                char label[kDICOMStr];
+                dcmStr (lLength, &buffer[lPos], label, true);
+                if(d.frameLabels.size() < parameterIndex)
+                    d.frameLabels.resize(parameterIndex);
+                d.frameLabels[parameterIndex-1] = std::string(label);
                 break;
 			case kFrameContentSequence :
             	//if (!(d.manufacturer == kMANUFACTURER_BRUKER)) break; //see https://github.com/rordenlab/dcm2niix/issues/241
