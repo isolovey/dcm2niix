@@ -2775,24 +2775,32 @@ unsigned char *nii_demosaic(unsigned char *inImg, struct nifti_1_header *hdr, in
 	int col = 0;
 	int row = 0;
 	int lOutPos = 0;
+	int vOffset = hdr->bitpix / 8 * hdr->dim[1] * hdr->dim[2];
 	hdr->dim[1] = hdr->dim[1] / nCol;
 	hdr->dim[2] = hdr->dim[2] / nRow;
+	hdr->dim[4] = hdr->dim[3];
 	hdr->dim[3] = nMosaicSlices;
+	if (hdr->dim[4] > 1)
+		hdr->dim[0]++;
 	size_t imgsz = nii_ImgBytes(*hdr);
 	unsigned char *outImg = (unsigned char *)malloc(imgsz);
-	for (int m = 1; m <= nMosaicSlices; m++) {
-		int lPos = (row * rowBytes) + (col * colBytes);
-		for (int y = 0; y < hdr->dim[2]; y++) {
-			memcpy(&outImg[lOutPos], &inImg[lPos], colBytes); // dest, src, bytes
-			lPos += lineBytes;
-			lOutPos += colBytes;
-		}
-		col++;
-		if (col >= nCol) {
-			row++;
-			col = 0;
-		} //start new column
-	} //for m = each mosaic slice
+	for (int v = 0; v < hdr->dim[4]; v++) {
+		for (int m = 1; m <= nMosaicSlices; m++) {
+			int lPos = v * vOffset + (row * rowBytes) + (col * colBytes);
+			for (int y = 0; y < hdr->dim[2]; y++) {
+				memcpy(&outImg[lOutPos], &inImg[lPos], colBytes); // dest, src, bytes
+				lPos += lineBytes;
+				lOutPos += colBytes;
+			}
+			col++;
+			if (col >= nCol) {
+				row++;
+				col = 0;
+			} //start new column
+		} //for m = each mosaic slice
+		row = 0;
+		col = 0;
+	} // for v = each volume
 	free(inImg);
 	return outImg;
 } // nii_demosaic()
